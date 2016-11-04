@@ -27,7 +27,7 @@ args = docopt(__doc__)
 
 def parse_config(config_file):
     config_data = json.loads(open(config_file, 'r').read())
-    return config_data['primer3'], config_data['master'], config_data['settings']
+    return config_data['primer3'], config_data['master'], config_data['Lsettings'], config_data['Rsettings']
 
 
 def populate_seq_dict(id_dict, master, err):
@@ -71,13 +71,13 @@ def run_primer3(input, output, settings, primer3):
     subprocess.call(cmd, shell=True)
 
 
-def setup_primer3(seq_dict, primer3, settings, temp_dir):
+def setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir):
     for nm in seq_dict:
         (l_input_file, r_input_file) = create_seq(nm, seq_dict[nm])
         l_output_file = temp_dir + nm + '_LEFT_PRIMER3_RESULTS.txt'
         r_output_file = temp_dir + nm + '_RIGHT_PRIMER3_RESULTS.txt'
-        run_primer3(l_input_file, l_output_file, settings, primer3)
-        run_primer3(r_input_file, r_output_file, settings, primer3)
+        run_primer3(l_input_file, l_output_file, Lsettings, primer3)
+        run_primer3(r_input_file, r_output_file, Rsettings, primer3)
 
 
 timestamp = str(int(time.mktime(datetime.now().timetuple())))
@@ -86,7 +86,7 @@ tbl = open(timestamp + '_results.xls', 'w')
 temp_dir = timestamp + '_TEMP/'
 subprocess.call('mkdir ' + temp_dir, shell=True)
 
-(primer3, master, settings) = parse_config(args['<config>'])
+(primer3, master, Lsettings, Rsettings) = parse_config(args['<config>'])
 header = 'RefSeq ID \tDonor Left join F\tDonor Left join F oligo sequence\tDonor Left join R\t' \
          'Donor Left join R oligo sequence\tDonor Right join F\tDonor Right join F oligo sequence\t' \
          'Donor Right join F\tDonor Right join F oligo sequence\n'
@@ -98,4 +98,4 @@ for line in open(args['<list>']):
     id_dict[line] = 0
 # get relevant seqs from table
 seq_dict = populate_seq_dict(id_dict, master, warnings)
-setup_primer3(seq_dict, primer3, settings, temp_dir)
+setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir)
