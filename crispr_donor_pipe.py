@@ -16,6 +16,7 @@ Options:
 
 """
 from docopt import docopt
+import gzip
 import sys
 import time
 from datetime import datetime
@@ -27,12 +28,13 @@ args = docopt(__doc__)
 
 def parse_config(config_file):
     config_data = json.loads(open(config_file, 'r').read())
-    return config_data['primer3'], config_data['master'], config_data['Lsettings'], config_data['Rsettings']
+    return config_data['primer3'], config_data['master'], config_data['Lsettings'], config_data['Rsettings'], \
+           config_data['LR_len'], config_data['RF_len']
 
 
 def populate_seq_dict(id_dict, master, err):
     seq_info = {}
-    cur = open(master)
+    cur = gzip.open(master)
     next(cur)
     for entry in cur:
         entry = entry.rstrip('\n').split('\t')
@@ -44,7 +46,7 @@ def populate_seq_dict(id_dict, master, err):
                 id_dict[nm] = 1
                 seq_info[nm] = {}
                 seq_info[nm]['gene'] = gene_list[i]
-                seq_info[nm]['info'] = entry[2:]
+                seq_info[nm]['seq'] = entry[2:]
                 break
     for nm in id_dict:
         if id_dict[nm] == 0:
@@ -52,18 +54,33 @@ def populate_seq_dict(id_dict, master, err):
     return seq_info
 
 
-def create_seq(nm, info):
+def rev_comp(seq):
+    code = {'A':'T', 'T':'A', 'C':'G', 'G':'C'}
+    new_seq = seq
+    for i in xrange(0, len(seq), 1):
+        new_seq[i] = code[seq[i]]
+    return new_seq[::-1]
+
+
+def create_seq(nm, info, LR_len, RF_len):
         l_input_file = temp_dir + nm + '_LEFT_SEQUENCE.txt'
         r_input_file = temp_dir + nm + '_RIGHT_SEQUENCE.txt'
         left = open(l_input_file, 'w')
-        left.write('SEQUENCE_ID=' + nm + '\nSEQUENCE_TEMPLATE=' + info['info'][2] + '\nSEQUENCE_PRIMER_REVCOMP='
-                   + info['info'][0] + '\nSEQUENCE_TARGET=37,21\n=')
+        lr_prime = info['seq'][0][(int(LR_len) * -1):]
+        lr_prime = rev_comp(lr_prime)
+        left.write('SEQUENCE_ID=' + nm + '\nSEQUENCE_TEMPLATE=' + info['seq'][0] + '\nSEQUENCE_PRIMER_REVCOMP='
+                   + lr_prime + '\nSEQUENCE_TARGET=37,21\n=')
         left.close()
+        rf_prime = info['seq'][1][:(int(RF_len))]
         right = open(r_input_file, 'w')
-        right.write('SEQUENCE_ID=' + nm + '\nSEQUENCE_TEMPLATE=' + info['info'][3] + '\nSEQUENCE_PRIMER='
-                   + info['info'][1] + '\nSEQUENCE_TARGET=37,21\n=')
+        right.write('SEQUENCE_ID=' + nm + '\nSEQUENCE_TEMPLATE=' + info['seq'][1] + '\nSEQUENCE_PRIMER='
+                   + rf_prime + '\nSEQUENCE_TARGET=37,21\n=')
         right.close()
         return l_input_file, r_input_file
+
+
+#def parse_results(output):
+
 
 
 def run_primer3(input, output, settings, primer3):
@@ -71,9 +88,9 @@ def run_primer3(input, output, settings, primer3):
     subprocess.call(cmd, shell=True)
 
 
-def setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir):
+def setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, LR_len, RF_len):
     for nm in seq_dict:
-        (l_input_file, r_input_file) = create_seq(nm, seq_dict[nm])
+        (l_input_file, r_input_file) = create_seq(nm, seq_dict[nm], LR_len, RF_len)
         l_output_file = temp_dir + nm + '_LEFT_PRIMER3_RESULTS.txt'
         r_output_file = temp_dir + nm + '_RIGHT_PRIMER3_RESULTS.txt'
         run_primer3(l_input_file, l_output_file, Lsettings, primer3)
@@ -86,7 +103,7 @@ tbl = open(timestamp + '_results.xls', 'w')
 temp_dir = timestamp + '_TEMP/'
 subprocess.call('mkdir ' + temp_dir, shell=True)
 
-(primer3, master, Lsettings, Rsettings) = parse_config(args['<config>'])
+(primer3, master, Lsettings, Rsettings, LR_len, RF_len) = parse_config(args['<config>'])
 header = 'RefSeq ID \tDonor Left join F\tDonor Left join F oligo sequence\tDonor Left join R\t' \
          'Donor Left join R oligo sequence\tDonor Right join F\tDonor Right join F oligo sequence\t' \
          'Donor Right join F\tDonor Right join F oligo sequence\n'
@@ -98,4 +115,4 @@ for line in open(args['<list>']):
     id_dict[line] = 0
 # get relevant seqs from table
 seq_dict = populate_seq_dict(id_dict, master, warnings)
-setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir)
+setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, LR_len, RF_len)
