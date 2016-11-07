@@ -55,10 +55,10 @@ def populate_seq_dict(id_dict, master, err):
 
 
 def rev_comp(seq):
-    code = {'A':'T', 'T':'A', 'C':'G', 'G':'C'}
-    new_seq = seq
+    code = {'A': 'T', 'T': 'A', 'C': 'G', 'G': 'C'}
+    new_seq = ''
     for i in xrange(0, len(seq), 1):
-        new_seq[i] = code[seq[i]]
+        new_seq += code[seq[i]]
     return new_seq[::-1]
 
 
