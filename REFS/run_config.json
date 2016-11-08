@@ -6,5 +6,6 @@
   "lf_gibson": "tgaattcgagctcggtaccc",
   "lr_gibson": "cttgcagtagttggaatccc",
   "rf_gibson": "ttgacgagttcttctgagtc",
-  "rr_gibson": "agcttgcatgcctgcaggtc"
+  "rr_gibson": "agcttgcatgcctgcaggtc",
+  "GC_trigger": "0.5"
 }
