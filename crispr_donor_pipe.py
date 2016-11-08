@@ -1,23 +1,19 @@
 """Creates primers using refseq ID list and master table
 
-Usage: ./crispr_donor_pipe.py (<config> <list> <table>) [options]
+Usage: ./crispr_donor_pipe.py (<config> <list> <LR_len> <RF_len>) [options]
 
 Arguments:
     <config>    json formatted config file with refs and tool locations
     <list>      list of refSeq IDs, one per line
-    <table>     Table with refseq ID, gene symbol, starting left and right primer sequences and left and right primer regions
+    <LR_len>    length of left reverse sequence primer to try
+    <RF_len>    length of right forward sequence primer to try
 
 Options:
     -h --help
-    --lf  LEFT_FORWARD  left forward sequence to prepend
-    --lr  LEFT_REVERSE  left reverse sequence to prepend
-    --rf  RIGHT_FORWARD  right forward sequence to prepend
-    --rr  RIGHT_REVERSE  right reverse sequence to prepend
 
 """
 from docopt import docopt
 import gzip
-import sys
 import time
 from datetime import datetime
 import subprocess
@@ -29,7 +25,7 @@ args = docopt(__doc__)
 def parse_config(config_file):
     config_data = json.loads(open(config_file, 'r').read())
     return config_data['primer3'], config_data['master'], config_data['Lsettings'], config_data['Rsettings'], \
-           config_data['LR_len'], config_data['RF_len']
+           config_data['lf_gibson'], config_data['lr_gibson'], config_data['rf_gibson'], config_data['rr_gibson']
 
 
 def populate_seq_dict(id_dict, master, err):
@@ -79,8 +75,16 @@ def create_seq(nm, info, LR_len, RF_len):
         return l_input_file, r_input_file
 
 
-#def parse_results(output):
-
+def parse_results(output, forward, reverse, side, gene):
+    f_primer = ''
+    r_primer = ''
+    for result in open(output):
+        cur = result.rstrip('\n').split('=')
+        if cur[0] == 'PRIMER_LEFT_0_SEQUENCE':
+            f_primer = cur[1]
+        if cur[1] == 'PRIMER_RIGHT_0_SEQUENCE':
+            r_primer = cur[1]
+    return '\t'.join((gene + '.' + side + '.F', forward + f_primer, gene + '.' + side + '.R', reverse + r_primer))
 
 
 def run_primer3(input, output, settings, primer3):
@@ -88,13 +92,18 @@ def run_primer3(input, output, settings, primer3):
     subprocess.call(cmd, shell=True)
 
 
-def setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, LR_len, RF_len):
+def setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, LR_len, RF_len, lf_gibson, lr_gibson, rf_gibson,
+                  rr_gibson, tbl):
     for nm in seq_dict:
         (l_input_file, r_input_file) = create_seq(nm, seq_dict[nm], LR_len, RF_len)
         l_output_file = temp_dir + nm + '_LEFT_PRIMER3_RESULTS.txt'
         r_output_file = temp_dir + nm + '_RIGHT_PRIMER3_RESULTS.txt'
+        gene = seq_dict[nm]['gene']
         run_primer3(l_input_file, l_output_file, Lsettings, primer3)
         run_primer3(r_input_file, r_output_file, Rsettings, primer3)
+        left_str = parse_results(l_output_file, lf_gibson, lr_gibson, 'Left',  gene)
+        right_str = parse_results(l_output_file, rf_gibson, rr_gibson, 'Right', gene)
+        tbl.write(nm + '\t' + left_str + '\t' + right_str + '\n')
 
 
 timestamp = str(int(time.mktime(datetime.now().timetuple())))
@@ -103,10 +112,11 @@ tbl = open(timestamp + '_results.xls', 'w')
 temp_dir = timestamp + '_TEMP/'
 subprocess.call('mkdir ' + temp_dir, shell=True)
 
-(primer3, master, Lsettings, Rsettings, LR_len, RF_len) = parse_config(args['<config>'])
+(primer3, master, Lsettings, Rsettings, lf_gibson, lr_gibson, rf_gibson, rr_gibson) = parse_config(args['<config>'])
+(LR_len, RF_len) = (args['<LR_len>'], args['<RF_len>'])
 header = 'RefSeq ID \tDonor Left join F\tDonor Left join F oligo sequence\tDonor Left join R\t' \
          'Donor Left join R oligo sequence\tDonor Right join F\tDonor Right join F oligo sequence\t' \
-         'Donor Right join F\tDonor Right join F oligo sequence\n'
+         'Donor Right join R\tDonor Right join R oligo sequence\n'
 tbl.write(header)
 id_dict = {}
 # set up transcript list
@@ -115,4 +125,6 @@ for line in open(args['<list>']):
     id_dict[line] = 0
 # get relevant seqs from table
 seq_dict = populate_seq_dict(id_dict, master, warnings)
-setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, LR_len, RF_len)
+setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, LR_len, RF_len, lf_gibson, lr_gibson, rf_gibson,
+              rr_gibson, tbl)
+tbl.close()

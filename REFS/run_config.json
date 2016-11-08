@@ -3,6 +3,8 @@
   "master": "/Users/Miguel/Documents/Miguel/2016-Nov-2_moran_req/crispr_donor_pipe/REFS/hg19_stop_region_master.txt.gz",
   "Lsettings": "/Users/Miguel/Documents/Miguel/2016-Nov-2_moran_req/crispr_donor_pipe/REFS/L_primer3_settings.txt",
   "Rsettings": "/Users/Miguel/Documents/Miguel/2016-Nov-2_moran_req/crispr_donor_pipe/REFS/R_primer3_settings.txt",
-  "LR_len": "20",
-  "RF_len": "20"
+  "lf_gibson": "tgaattcgagctcggtaccc",
+  "lr_gibson": "cttgcagtagttggaatccc",
+  "rf_gibson": "ttgacgagttcttctgagtc",
+  "rr_gibson": "agcttgcatgcctgcaggtc"
 }
