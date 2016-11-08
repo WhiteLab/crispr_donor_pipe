@@ -17,7 +17,6 @@ Options:
 from docopt import docopt
 import gzip
 import time
-from datetime import datetime
 import subprocess
 import json
 
@@ -95,14 +94,12 @@ def parse_results(output, forward, reverse, side, gene):
         elif side == 'Left' and cur[0] == 'PRIMER_LEFT_0_SEQUENCE':
             f_primer = cur[1]
             f = 1
-            #break
         if side == 'Right' and cur[0] == 'SEQUENCE_PRIMER':
             f_primer = cur[1]
             fixed = f_primer
         elif side == 'Right' and cur[0] == 'PRIMER_RIGHT_0_SEQUENCE':
             r_primer = cur[1]
             f = 1
-            #break
     return '\t'.join((gene + '.' + side + '.F', forward + f_primer, attr_dict['PRIMER_LEFT_0_PROBLEMS'],
                       attr_dict['PRIMER_LEFT_0_TM'], gene + '.' + side + '.R', reverse + r_primer,
                       attr_dict['PRIMER_RIGHT_0_PROBLEMS'], attr_dict['PRIMER_RIGHT_0_TM'])), f, fixed
@@ -143,6 +140,8 @@ def setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, LR_len, RF_
             if cur_gc >= gc_trigger:
                 start = int(min_len)
                 stop = int(LR_len)
+            warnings.write('No primer for ' + nm + ' left seq found at length ' + LR_len + ' GC content ' + str(cur_gc)
+                           + '. Trying range ' + str(start) + '-' + str(stop) + '\n')
             for i in xrange(start, stop, 1):
                 l_input_file = create_seq(nm, seq_dict[nm], str(i), 'LEFT')
                 l_output_file = temp_dir + nm + '_LEFT_PRIMER3_RESULTS.txt'
@@ -150,6 +149,8 @@ def setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, LR_len, RF_
                 (left_str, left_flag, left_fixed) = parse_results(l_output_file, lf_gibson, lr_gibson, 'Left', gene)
                 if left_flag == 1:
                     break
+            if left_flag == 0:
+                warnings.write('Failed finding primer for ' + nm + ' left seq.')
         (right_str, right_flag, right_fixed) = parse_results(r_output_file, rf_gibson, rr_gibson, 'Right', gene)
         if right_flag == 0:
             cur_gc = calc_gc(right_fixed)
@@ -158,6 +159,8 @@ def setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, LR_len, RF_
             if cur_gc >= gc_trigger:
                 start = int(min_len)
                 stop = int(LR_len)
+            warnings.write('No primer for ' + nm + ' right seq found at length ' + RF_len + ' GC content ' + str(cur_gc)
+                           + '. Trying range ' + str(start) + '-' + str(stop) + '\n')
             for i in xrange(start, stop, 1):
                 r_input_file = create_seq(nm, seq_dict[nm], str(i), 'RIGHT')
                 r_output_file = temp_dir + nm + '_RIGHT_PRIMER3_RESULTS.txt'
@@ -165,6 +168,8 @@ def setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, LR_len, RF_
                 (right_str, right_flag, right_fixed) = parse_results(r_output_file, rf_gibson, rr_gibson, 'Right', gene)
                 if right_flag == 1:
                     break
+            if right_flag == 0:
+                warnings.write('Failed finding primer for ' + nm + ' right seq.')
         tbl.write(nm + '\t' + left_str + '\t' + right_str + '\n')
 
 
@@ -190,5 +195,6 @@ for line in open(args['<list>']):
 # get relevant seqs from table
 seq_dict = populate_seq_dict(id_dict, master, warnings)
 setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, LR_len, RF_len, lf_gibson, lr_gibson, rf_gibson,
-              rr_gibson, tbl, min_len, max_len, gc_trigger)
+              rr_gibson, tbl, min_len, max_len, gc_trigger, warnings)
 tbl.close()
+warnings.close()
