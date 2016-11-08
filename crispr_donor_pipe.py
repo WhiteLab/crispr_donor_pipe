@@ -122,7 +122,7 @@ def calc_gc(seq):
 
 
 def setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, LR_len, RF_len, lf_gibson, lr_gibson, rf_gibson,
-                  rr_gibson, tbl, min_len, max_len, gc_trigger):
+                  rr_gibson, tbl, min_len, max_len, gc_trigger, warnings):
     for nm in seq_dict:
         l_input_file = create_seq(nm, seq_dict[nm], LR_len, 'LEFT')
         r_input_file = create_seq(nm, seq_dict[nm], RF_len, 'RIGHT')
@@ -137,17 +137,24 @@ def setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, LR_len, RF_
             cur_gc = calc_gc(left_fixed)
             start = int(LR_len) + 1
             stop = int(max_len) + 1
-            if cur_gc >= gc_trigger:
-                start = int(min_len)
-                stop = int(LR_len)
-            warnings.write('No primer for ' + nm + ' left seq found at length ' + LR_len + ' GC content ' + str(cur_gc)
-                           + '. Trying range ' + str(start) + '-' + str(stop) + '\n')
-            for i in xrange(start, stop, 1):
+            intvl = 1
+            warn = 'No primer for ' + nm + ' left seq found at length ' + LR_len + ' GC content ' + str(cur_gc) \
+                   + '. Trying range ' + str(start) + '-' + str(stop - 1) + '\n'
+
+            if cur_gc >= float(gc_trigger):
+                start = int(LR_len) - 1
+                stop = int(min_len) - 1
+                intvl = -1
+                warn = 'No primer for ' + nm + ' left seq found at length ' + LR_len + ' GC content ' + str(cur_gc) \
+                   + '. Trying range ' + str(start) + '-' + str(stop + 1) + '\n'
+            warnings.write(warn)
+            for i in xrange(start, stop, intvl):
                 l_input_file = create_seq(nm, seq_dict[nm], str(i), 'LEFT')
                 l_output_file = temp_dir + nm + '_LEFT_PRIMER3_RESULTS.txt'
                 run_primer3(l_input_file, l_output_file, Lsettings, primer3)
                 (left_str, left_flag, left_fixed) = parse_results(l_output_file, lf_gibson, lr_gibson, 'Left', gene)
                 if left_flag == 1:
+                    warnings.write('Primer found at length ' + str(i) + '\n')
                     break
             if left_flag == 0:
                 warnings.write('Failed finding primer for ' + nm + ' left seq.')
@@ -156,17 +163,20 @@ def setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, LR_len, RF_
             cur_gc = calc_gc(right_fixed)
             start = int(RF_len) + 1
             stop = int(max_len) + 1
+            intvl = 1
             if cur_gc >= gc_trigger:
-                start = int(min_len)
-                stop = int(LR_len)
+                start = int(RF_len) - 1
+                stop = int(min_len) - 1
+                intvl = -1
             warnings.write('No primer for ' + nm + ' right seq found at length ' + RF_len + ' GC content ' + str(cur_gc)
                            + '. Trying range ' + str(start) + '-' + str(stop) + '\n')
-            for i in xrange(start, stop, 1):
+            for i in xrange(start, stop, intvl):
                 r_input_file = create_seq(nm, seq_dict[nm], str(i), 'RIGHT')
                 r_output_file = temp_dir + nm + '_RIGHT_PRIMER3_RESULTS.txt'
                 run_primer3(r_input_file, r_output_file, Rsettings, primer3)
                 (right_str, right_flag, right_fixed) = parse_results(r_output_file, rf_gibson, rr_gibson, 'Right', gene)
                 if right_flag == 1:
+                    warnings.write('Primer found at length ' + str(i) + '\n')
                     break
             if right_flag == 0:
                 warnings.write('Failed finding primer for ' + nm + ' right seq.')
