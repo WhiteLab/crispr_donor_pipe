@@ -19,6 +19,7 @@ import gzip
 import time
 import subprocess
 import json
+import os
 
 args = docopt(__doc__)
 
@@ -106,7 +107,7 @@ def parse_results(output, forward, reverse, side, gene):
 
 
 def run_primer3(input, output, settings, primer3):
-    cmd = primer3 + ' -p3_settings_file=' + settings + ' -output=' + output + ' ' + input
+    cmd = '\"' + primer3 + '\" -p3_settings_file=\"' + settings + '\" -output=' + output + ' ' + input
     subprocess.call(cmd, shell=True)
 
 
@@ -190,7 +191,7 @@ timestamp = time.strftime("%Y-%m-%d_%H%M") + '_' + LR_len + '_' + RF_len
 warnings = open(timestamp + '_warnings.txt', 'w')
 tbl = open(timestamp + '_results.xls', 'w')
 temp_dir = timestamp + '_TEMP/'
-subprocess.call('mkdir ' + temp_dir, shell=True)
+os.mkdir(temp_dir)
 
 
 header = 'RefSeq ID \tDonor Left join F\tDonor Left join F oligo sequence\tLF_Problems\tLF_TM\tDonor Left join R\t' \
