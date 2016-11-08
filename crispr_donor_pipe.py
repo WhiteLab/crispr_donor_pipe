@@ -1,12 +1,14 @@
 """Creates primers using refseq ID list and master table
 
-Usage: ./crispr_donor_pipe.py (<config> <list> <LR_len> <RF_len>) [options]
+Usage: ./crispr_donor_pipe.py (<config> <list> <LR_len> <RF_len> <min> <max>) [options]
 
 Arguments:
     <config>    json formatted config file with refs and tool locations
     <list>      list of refSeq IDs, one per line
     <LR_len>    length of left reverse sequence primer to try
     <RF_len>    length of right forward sequence primer to try
+    <min>       min length to use when trying to find an alternative primer
+    <max>       max length to use when trying to find an alternative primer
 
 Options:
     -h --help
@@ -78,13 +80,28 @@ def create_seq(nm, info, LR_len, RF_len):
 def parse_results(output, forward, reverse, side, gene):
     f_primer = ''
     r_primer = ''
+    attr_dict = {'PRIMER_LEFT_0_PROBLEMS': '', 'PRIMER_LEFT_0_TM': '', 'PRIMER_RIGHT_0_PROBLEMS': '',
+                 'PRIMER_RIGHT_0_TM': ''}
+    f = 0
     for result in open(output):
         cur = result.rstrip('\n').split('=')
-        if cur[0] == 'PRIMER_LEFT_0_SEQUENCE':
-            f_primer = cur[1]
-        if cur[1] == 'PRIMER_RIGHT_0_SEQUENCE':
+        if cur[0] in attr_dict:
+            attr_dict[cur[0]] = cur[1]
+        if side == 'Left' and cur[0] == 'SEQUENCE_PRIMER_REVCOMP':
             r_primer = cur[1]
-    return '\t'.join((gene + '.' + side + '.F', forward + f_primer, gene + '.' + side + '.R', reverse + r_primer))
+        elif side == 'Left' and cur[0] == 'PRIMER_LEFT_0_SEQUENCE':
+            f_primer = cur[1]
+            f = 1
+            #break
+        if side == 'Right' and cur[0] == 'SEQUENCE_PRIMER':
+            f_primer = cur[1]
+        elif side == 'Right' and cur[0] == 'PRIMER_RIGHT_0_SEQUENCE':
+            r_primer = cur[1]
+            f = 1
+            #break
+    return '\t'.join((gene + '.' + side + '.F', forward + f_primer, attr_dict['PRIMER_LEFT_0_PROBLEMS'],
+                      attr_dict['PRIMER_LEFT_0_TM'], gene + '.' + side + '.R', reverse + r_primer,
+                      attr_dict['PRIMER_RIGHT_0_PROBLEMS'], attr_dict['PRIMER_RIGHT_0_TM'])), f,
 
 
 def run_primer3(input, output, settings, primer3):
@@ -93,7 +110,7 @@ def run_primer3(input, output, settings, primer3):
 
 
 def setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, LR_len, RF_len, lf_gibson, lr_gibson, rf_gibson,
-                  rr_gibson, tbl):
+                  rr_gibson, tbl, min_len, max_len):
     for nm in seq_dict:
         (l_input_file, r_input_file) = create_seq(nm, seq_dict[nm], LR_len, RF_len)
         l_output_file = temp_dir + nm + '_LEFT_PRIMER3_RESULTS.txt'
@@ -101,22 +118,24 @@ def setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, LR_len, RF_
         gene = seq_dict[nm]['gene']
         run_primer3(l_input_file, l_output_file, Lsettings, primer3)
         run_primer3(r_input_file, r_output_file, Rsettings, primer3)
-        left_str = parse_results(l_output_file, lf_gibson, lr_gibson, 'Left',  gene)
-        right_str = parse_results(l_output_file, rf_gibson, rr_gibson, 'Right', gene)
+        # parse results, if primer not found, adjust length and try again
+        (left_str, left_flag) = parse_results(l_output_file, lf_gibson, lr_gibson, 'Left',  gene)
+        (right_str, right_flag) = parse_results(r_output_file, rf_gibson, rr_gibson, 'Right', gene)
         tbl.write(nm + '\t' + left_str + '\t' + right_str + '\n')
 
 
-timestamp = str(int(time.mktime(datetime.now().timetuple())))
+(primer3, master, Lsettings, Rsettings, lf_gibson, lr_gibson, rf_gibson, rr_gibson) = parse_config(args['<config>'])
+(LR_len, RF_len, min_len, max_len) = (args['<LR_len>'], args['<RF_len>'], args['<min>'], args['<max>'])
+timestamp = time.strftime("%Y-%m-%d_%H%M") + '_' + LR_len + '_' + RF_len
 warnings = open(timestamp + '_warnings.txt', 'w')
 tbl = open(timestamp + '_results.xls', 'w')
 temp_dir = timestamp + '_TEMP/'
 subprocess.call('mkdir ' + temp_dir, shell=True)
 
-(primer3, master, Lsettings, Rsettings, lf_gibson, lr_gibson, rf_gibson, rr_gibson) = parse_config(args['<config>'])
-(LR_len, RF_len) = (args['<LR_len>'], args['<RF_len>'])
-header = 'RefSeq ID \tDonor Left join F\tDonor Left join F oligo sequence\tDonor Left join R\t' \
-         'Donor Left join R oligo sequence\tDonor Right join F\tDonor Right join F oligo sequence\t' \
-         'Donor Right join R\tDonor Right join R oligo sequence\n'
+
+header = 'RefSeq ID \tDonor Left join F\tDonor Left join F oligo sequence\tLF_Problems\tLF_TM\tDonor Left join R\t' \
+         'Donor Left join R oligo sequence\tLR_Problems\tLR_TM\tDonor Right join F\tDonor Right join F oligo sequence' \
+         '\tRF_Problems\tRF_TM\tDonor Right join R\tDonor Right join R oligo sequence\tRR_Problems\tRR_TM\n'
 tbl.write(header)
 id_dict = {}
 # set up transcript list
@@ -126,5 +145,5 @@ for line in open(args['<list>']):
 # get relevant seqs from table
 seq_dict = populate_seq_dict(id_dict, master, warnings)
 setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, LR_len, RF_len, lf_gibson, lr_gibson, rf_gibson,
-              rr_gibson, tbl)
+              rr_gibson, tbl, min_len, max_len)
 tbl.close()
