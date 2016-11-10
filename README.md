@@ -14,10 +14,10 @@ path_to_python.exe crispr_donor_pipe.py (<config> <list> <LR_len> <RF_len> <min>
 Arguments:  
     &lt;config&gt;    json formatted config file with refs and tool locations  
     &lt;list&gt;      list of refSeq IDs, one per line  
-    <LR_len>    length of left reverse sequence primer to try  
-    <RF_len>    length of right forward sequence primer to try  
-    <min>       min length to use when trying to find an alternative primer  
-    <max>       max length to use when trying to find an alternative primer  
+    &lt;LR_len&gt;    length of left reverse sequence primer to try  
+    &lt;RF_len&gt;    length of right forward sequence primer to try  
+    &lt;min&gt;       min length to use when trying to find an alternative primer  
+    &lt;max&gt;       max length to use when trying to find an alternative primer  
 
 Options:  
     -h --help  
