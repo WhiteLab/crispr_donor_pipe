@@ -13,8 +13,14 @@ Options:
 import re
 from docopt import docopt
 args = docopt(__doc__)
-from crispr_donor_pipe import rev_comp
 
+
+def rev_comp(seq):
+    code = {'A': 'T', 'T': 'A', 'C': 'G', 'G': 'C'}
+    new_seq = ''
+    for i in xrange(0, len(seq), 1):
+        new_seq += code[seq[i]]
+    return new_seq[::-1]
 
 
 def get_loc(cand, seq):
@@ -66,18 +72,23 @@ for line in open(args['<pasted>']):
     else:
         (cat, dist, strand) = get_loc(info[2], seq_list[seq_alias[cur]])
         if cat not in gRNA[cur]:
-            gRNA[cur] = {}
+            gRNA[cur][cat] = {}
+        if dist not in gRNA[cur][cat]:
+            gRNA[cur][cat][dist] = {}
         gRNA[cur][cat][dist]['name'] = info[0]
         gRNA[cur][cat][dist]['st'] = strand
         gRNA[cur][cat][dist]['seq'] = info[2]
         gRNA[cur][cat][dist]['score'] = info[1]
 # print out prioritized gRNAs
-print 'Gene\tCategory\tDistance\tSequence\tStrand\tName\n'
+print 'Gene\tCategory\tDistance\tSequence\tSense\tName'
 cat_dict = {0: 'STOP', 1: 'UTR', 2: 'CODON'}
 st_dict = {0: '+', 1: '-'}
 for gene in gRNA:
+    f = 0
     for i in xrange(3):
-        if i in gRNA[gene]:
+        if i in gRNA[gene] and f == 0:
+            f = 1
             for j in sorted(gRNA[gene][i]):
                 cur = gRNA[gene][i][j]
-                print '\t'.join((gene, cat_dict[i], cur['dist'], cur['seq'], st_dict[cur['st']], cur['name']))
+                print '\t'.join((gene, cat_dict[i], str(j), cur['seq'], st_dict[cur['st']], cur['name']))
+                break
