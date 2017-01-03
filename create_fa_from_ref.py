@@ -27,28 +27,29 @@ head = next(ref)
 found = 0
 for line in ref:
     if found == id_len:
-        ref.close()
+        break
     else:
         info = line.rstrip('\n').split('\t')
         ids = info[0].split(',')
         syms = info[1].split(',')
-        f = 0
-        for nm in ids:
-            if nm in id_dict:
-                id_dict[nm] = 1
+
+        for i in xrange(len(ids)):
+            if ids[i] in id_dict:
+                id_dict[ids[i]] = 1
                 found += 1
                 f = 1
-                print nm + '\t' + info[2]
+                print '>' + ids[i] + '\n' + info[2]
                 break
-        if f != 0:
-            for gene in syms:
-                if gene in id_dict:
-                    id_dict[gene] = 1
-                    found += 1
-                    f = 1
-                    print gene + '\t' + info[2]
-                    break
+            elif syms[i] in id_dict:
+                id_dict[syms[i]] = 1
+                found += 1
+                print '>' + syms[i] + '\n' + info[2]
+                break
+ref.close()
+
 if found != id_len:
     for item in id_dict:
         if id_dict[item] == 0:
             sys.stderr.write('Warning, ' + item + ' not found!\n')
+else:
+    sys.stderr.write('All items found\n')
