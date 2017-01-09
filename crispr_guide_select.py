@@ -42,6 +42,12 @@ def get_loc(cand, seq):
         return 2, d, r
 
 
+def create_oligos(seq):
+    root = seq[:-3]
+    fwd = 'CACCG' + root
+    rev = 'C' + rev_comp(root) + 'CAAA'
+    return fwd, rev
+
 seq_list = []
 seq_alias = {}
 
@@ -80,7 +86,7 @@ for line in open(args['<pasted>']):
         gRNA[cur][cat][dist]['seq'] = info[2]
         gRNA[cur][cat][dist]['score'] = info[1]
 # print out prioritized gRNAs
-print 'Gene\tCategory\tDistance\tSequence\tSense\tName'
+print 'Gene\tCategory\tDistance\tSequence\tForward Oligo\tReverse Oligo\tScore\tSense\tName'
 cat_dict = {0: 'STOP', 1: 'UTR', 2: 'CODON'}
 st_dict = {0: '+', 1: '-'}
 for gene in gRNA:
@@ -90,5 +96,7 @@ for gene in gRNA:
             f = 1
             for j in sorted(gRNA[gene][i]):
                 cur = gRNA[gene][i][j]
-                print '\t'.join((gene, cat_dict[i], str(j), cur['seq'], st_dict[cur['st']], cur['name']))
+                (forward, reverse) = create_oligos(cur['seq'])
+                print '\t'.join((gene, cat_dict[i], str(j), cur['seq'], forward, reverse, cur['score'],
+                                 st_dict[cur['st']], cur['name']))
                 break
