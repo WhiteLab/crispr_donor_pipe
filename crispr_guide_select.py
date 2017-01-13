@@ -84,6 +84,7 @@ for line in open(args['<pasted>']):
         if cat == 6 and dist == 6 and strand == 6:
             sys.stderr.write(cur + '\tCould not find guide with reference. Try using the refseq ID; may have isoforms'
                                    ' with difference stop codons\n')
+            continue
         if cat not in gRNA[cur]:
             gRNA[cur][cat] = {}
         if dist not in gRNA[cur][cat]:
