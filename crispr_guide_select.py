@@ -11,6 +11,7 @@ Options:
 
 """
 import re
+import sys
 from docopt import docopt
 args = docopt(__doc__)
 
@@ -31,7 +32,10 @@ def get_loc(cand, seq):
         m = re.search(rev_cand, seq)
         r = 1
     # using 0 to represent spanning stop codon, 1 for 3' in reference to stop, or 2 in 5' reference to stop
-    (start, end) = m.span()
+    try:
+        (start, end) = m.span()
+    except:
+        return 6, 6, 6
     d = start - 102
     if start <= 100 and end >= 102:
         return 0, 0, r
@@ -77,6 +81,9 @@ for line in open(args['<pasted>']):
         temp = {}
     else:
         (cat, dist, strand) = get_loc(info[2], seq_list[seq_alias[cur]])
+        if cat == 6 and dist == 6 and strand == 6:
+            sys.stderr.write(cur + '\tCould not find guide with reference. Try using the refseq ID; may have isoforms'
+                                   ' with difference stop codons\n')
         if cat not in gRNA[cur]:
             gRNA[cur][cat] = {}
         if dist not in gRNA[cur][cat]:
