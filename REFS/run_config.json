@@ -1,8 +1,8 @@
 {
-  "primer3": "/Users/Miguel/Documents/Miguel/2016-Nov-2_moran_req/primer3-2.3.7/src/primer3_core",
-  "master": "/Users/Miguel/Documents/Miguel/2016-Nov-2_moran_req/crispr_donor_pipe/REFS/hg19_stop_region_master.txt.gz",
-  "Lsettings": "/Users/Miguel/Documents/Miguel/2016-Nov-2_moran_req/crispr_donor_pipe/REFS/L_primer3_settings.txt",
-  "Rsettings": "/Users/Miguel/Documents/Miguel/2016-Nov-2_moran_req/crispr_donor_pipe/REFS/R_primer3_settings.txt",
+  "primer3": "/data/tools/primer3-2.4.0/src/primer3_core",
+  "master": "/data/tools/crispr_donor_pipe/REFS/hg19_stop_region_master.txt.gz",
+  "Lsettings": "/data/tools/crispr_donor_pipe/REFS/L_primer3_settings.txt",
+  "Rsettings": "/data/tools/crispr_donor_pipe/REFS/R_primer3_settings.txt",
   "lf_gibson": "tgaattcgagctcggtaccc",
   "lr_gibson": "cttgcagtagttggaatccc",
   "rf_gibson": "ttgacgagttcttctgagtc",
