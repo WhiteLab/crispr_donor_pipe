@@ -39,10 +39,10 @@ Options:
 The first time you set up, you must add or edit the path to the primer3 melting temp config.  For example, add the following adjusting the path:
 PRIMER_THERMODYNAMIC_PARAMETERS_PATH=/Users/Miguel/Documents/Miguel/2016-Nov-2_moran_req/primer3-2.3.7/src/primer3_config/
 #### input_ids example:
-NM_001135564
-NM_001242333
-NM_024303
-NM_006492
+NM_001135564  
+NM_001242333  
+NM_024303  
+NM_006492  
 
 #### master table example:
 refseq_ID       Gene_symbol     L_seq_region    R_seq_region  
