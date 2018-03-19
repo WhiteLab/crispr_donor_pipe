@@ -73,7 +73,7 @@ def create_seq(nm, info, max_stop, max_start, side):
             end = str(seq_len - int(max_start))
             out_file.write('SEQUENCE_ID=' + nm + '\nSEQUENCE_TEMPLATE=' + info['seq'][0]
                            + '\nSEQUENCE_PRIMER_PAIR_OK_REGION_LIST=' + '0,' + max_stop + ',' + end + ','
-                           + str(seq_len) + '\n=')
+                           + max_start + '\n=')
             out_file.close()
         return input_file
 
