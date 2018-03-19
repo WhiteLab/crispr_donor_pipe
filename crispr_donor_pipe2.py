@@ -65,19 +65,19 @@ def create_seq(nm, seq, max_stop, max_start, side):
         input_file = temp_dir + nm + '_' + side + '_SEQUENCE.txt'
         out_file = open(input_file, 'w')
         seq_len = len(seq)
-        if side == 'LEFT':
-
-            end = str(seq_len - int(max_stop))
-            out_file.write('SEQUENCE_ID=' + nm + '\nSEQUENCE_TEMPLATE=' + seq
-                           + '\nSEQUENCE_PRIMER_PAIR_OK_REGION_LIST=' + '0,' + max_start + ',' + end + ','
-                           + max_stop + '\n=')
-            out_file.close()
-        else:
-            end = str(seq_len - int(max_start))
-            out_file.write('SEQUENCE_ID=' + nm + '\nSEQUENCE_TEMPLATE=' + seq
-                           + '\nSEQUENCE_PRIMER_PAIR_OK_REGION_LIST=' + '0,' + max_stop + ',' + end + ','
-                           + max_start + '\n=')
-            out_file.close()
+        # if side == 'LEFT':
+        #
+        end = str(seq_len - int(max_stop))
+        out_file.write('SEQUENCE_ID=' + nm + '\nSEQUENCE_TEMPLATE=' + seq
+                       + '\nSEQUENCE_PRIMER_PAIR_OK_REGION_LIST=' + '0,' + max_start + ',' + end + ','
+                       + max_stop + '\n=')
+        out_file.close()
+        # else:
+        #     end = str(seq_len - int(max_start))
+        #     out_file.write('SEQUENCE_ID=' + nm + '\nSEQUENCE_TEMPLATE=' + seq
+        #                    + '\nSEQUENCE_PRIMER_PAIR_OK_REGION_LIST=' + '0,' + max_stop + ',' + end + ','
+        #                    + max_start + '\n=')
+        #     out_file.close()
         return input_file
 
 
@@ -91,7 +91,7 @@ def process_hits(num_res, side, seq, fh, gene):
         data = result.rstrip('\n').split('=')
         m = re.match('PRIMER_(LEFT|RIGHT)_(\d)_(SEQUENCE|TM)', data[0])
         if m:
-            # pdb.set_trace()
+
             (cur_seq_side, cur_hit, cur_info) = (m.group(1), m.group(2), m.group(3))
             if cur_hit not in temp:
                 temp[cur_hit] = {}
@@ -106,6 +106,7 @@ def process_hits(num_res, side, seq, fh, gene):
             elif side == 'Left' and cur_seq_side == 'RIGHT':
                 r_primer = data[1]
                 cur_dist = dist - seq.rfind(rev_comp(r_primer)) + len(r_primer)
+                pdb.set_trace()
                 if cur_dist < best_dist:
                     best_index = cur_hit
                     best_dist = cur_dist
