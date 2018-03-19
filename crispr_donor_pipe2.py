@@ -105,8 +105,7 @@ def process_hits(num_res, side, seq, fh, gene):
                         break
             elif side == 'Left' and cur_seq_side == 'RIGHT':
                 r_primer = data[1]
-                cur_dist = dist - seq.rfind(rev_comp(r_primer)) + len(r_primer)
-                pdb.set_trace()
+                cur_dist = dist - seq.rfind(rev_comp(r_primer)) - len(r_primer)
                 if cur_dist < best_dist:
                     best_index = cur_hit
                     best_dist = cur_dist
