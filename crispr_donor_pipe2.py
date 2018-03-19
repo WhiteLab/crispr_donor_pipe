@@ -193,7 +193,7 @@ def setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, max_stop, m
 
             warnings.write(warn)
         (right_str, right_flag, right_fixed) = parse_results(r_output_file, rf_gibson, rr_gibson, 'Right', gene,
-                                                             seq_dict[nm]['seq'][0])
+                                                             seq_dict[nm]['seq'][1])
         if right_flag == 0:
             warn = 'No primer for ' + nm + ' right seq found at ' + max_start + ' from stop codon and ' + max_stop \
                    + ' from stop right\n'
