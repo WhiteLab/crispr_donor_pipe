@@ -81,7 +81,7 @@ def create_seq(nm, info, max_stop, max_start, side):
 def parse_results(output, forward, reverse, side, gene):
     f_primer = ''
     r_primer = ''
-    attr_dict = {'PRIMER_LEFT_0_PROBLEMS': '', 'PRIMER_LEFT_0_TM': '', 'PRIMER_RIGHT_0_PROBLEMS': '',
+    attr_dict = {'PRIMER_LEFT_EXPLAIN': '', 'PRIMER_LEFT_0_TM': '', 'PRIMER_RIGHT_EXPLAIN': '',
                  'PRIMER_RIGHT_0_TM': ''}
     f = 0
     fixed = ''
@@ -101,9 +101,9 @@ def parse_results(output, forward, reverse, side, gene):
         elif side == 'Right' and cur[0] == 'PRIMER_RIGHT_0_SEQUENCE':
             r_primer = cur[1]
             f = 1
-    return '\t'.join((gene + '.' + side + '.F', forward + f_primer, attr_dict['PRIMER_LEFT_0_PROBLEMS'],
+    return '\t'.join((gene + '.' + side + '.F', forward + f_primer, attr_dict['PRIMER_LEFT_EXPLAIN'],
                       attr_dict['PRIMER_LEFT_0_TM'], gene + '.' + side + '.R', reverse + r_primer,
-                      attr_dict['PRIMER_RIGHT_0_PROBLEMS'], attr_dict['PRIMER_RIGHT_0_TM'])), f, fixed
+                      attr_dict['PRIMER_RIGHT_EXPLAIN'], attr_dict['PRIMER_RIGHT_0_TM'])), f, fixed
 
 
 def run_primer3(input, output, settings, primer3):
@@ -160,9 +160,9 @@ temp_dir = timestamp + '_TEMP/'
 os.mkdir(temp_dir)
 
 
-header = 'RefSeq ID \tDonor Left join F\tDonor Left join F oligo sequence\tLF_Problems\tLF_TM\tDonor Left join R\t' \
-         'Donor Left join R oligo sequence\tLR_Problems\tLR_TM\tDonor Right join F\tDonor Right join F oligo sequence' \
-         '\tRF_Problems\tRF_TM\tDonor Right join R\tDonor Right join R oligo sequence\tRR_Problems\tRR_TM\n'
+header = 'RefSeq ID \tDonor Left join F\tDonor Left join F oligo sequence\tLF_Notes\tLF_TM\tDonor Left join R\t' \
+         'Donor Left join R oligo sequence\tLR_Notes\tLR_TM\tDonor Right join F\tDonor Right join F oligo sequence' \
+         '\tRF_Notes\tRF_TM\tDonor Right join R\tDonor Right join R oligo sequence\tRR_Notes\tRR_TM\n'
 tbl.write(header)
 id_dict = {}
 # set up transcript list
