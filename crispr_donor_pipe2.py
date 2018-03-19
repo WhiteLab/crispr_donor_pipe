@@ -89,13 +89,13 @@ def parse_results(output, forward, reverse, side, gene):
         cur = result.rstrip('\n').split('=')
         if cur[0] in attr_dict:
             attr_dict[cur[0]] = cur[1]
-        if side == 'Left' and cur[0] == 'SEQUENCE_PRIMER_REVCOMP':
+        if side == 'Left' and cur[0] == 'PRIMER_RIGHT_0_SEQUENCE':
             r_primer = cur[1]
             fixed = r_primer
         elif side == 'Left' and cur[0] == 'PRIMER_LEFT_0_SEQUENCE':
             f_primer = cur[1]
             f = 1
-        if side == 'Right' and cur[0] == 'SEQUENCE_PRIMER':
+        if side == 'Right' and cur[0] == 'PRIMER_LEFT_0_SEQUENCE':
             f_primer = cur[1]
             fixed = f_primer
         elif side == 'Right' and cur[0] == 'PRIMER_RIGHT_0_SEQUENCE':
@@ -140,17 +140,12 @@ def setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, max_stop, m
                    + ' from stop codon\n'
 
             warnings.write(warn)
-            if left_flag == 0:
-                warnings.write('Failed finding primer for ' + nm + ' left seq.\n')
         (right_str, right_flag, right_fixed) = parse_results(r_output_file, rf_gibson, rr_gibson, 'Right', gene)
         if right_flag == 0:
-            # cur_gc = calc_gc(right_fixed)
             warn = 'No primer for ' + nm + ' right seq found at ' + max_start + ' from stop codon and ' + max_stop \
                    + ' from stop right\n'
 
             warnings.write(warn)
-            if right_flag == 0:
-                warnings.write('Failed finding primer for ' + nm + ' right seq.\n')
         tbl.write(nm + '\t' + left_str + '\t' + right_str + '\n')
 
 
