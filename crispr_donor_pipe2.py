@@ -90,36 +90,36 @@ def process_hits(num_res, side, seq, fh, gene):
         data = result.rstrip('\n').split('=')
         m = re.match('PRIMER_([LEFT|RIGHT])_(\d)_([SEQUENCE|TM])', data[0])
         if m:
-            (cur_side, cur_hit, cur_info) = (m.group(1), m.group(2), m.group(3))
+            (cur_seq_side, cur_hit, cur_info) = (m.group(1), m.group(2), m.group(3))
             if cur_hit not in temp:
                 temp[cur_hit] = {}
             if cur_info == 'TM':
-                if cur_side == 'LEFT':
+                if cur_seq_side == 'LEFT':
                     temp[cur_hit]['l_tm'] = data[1]
                 else:
                     # after getting melting point for last hit, no more info needed from file
                     temp[cur_hit]['r_tm'] = data[1]
                     if int(cur_hit) == num_res - 1:
                         fh.close()
-            elif side == 'Left' and cur_side == 'RIGHT':
+            elif side == 'Left' and cur_seq_side == 'RIGHT':
                 r_primer = data[1]
                 cur_dist = dist - seq.rfind(rev_comp(r_primer)) + len(r_primer)
                 if cur_dist < best_dist:
                     best_index = cur_hit
                     best_dist = cur_dist
                 temp[cur_hit]['r_primer'] = r_primer
-            elif side == 'Left' and cur_side == 'LEFT':
+            elif side == 'Left' and cur_seq_side == 'LEFT':
                 f_primer = data[1]
                 temp[cur_hit]['f_primer'] = f_primer
-            if side == 'Right' and cur_side == 'LEFT':
+            if side == 'Right' and cur_seq_side == 'LEFT':
                 f_primer = data[1]
                 temp[cur_hit]['f_primer'] = f_primer
-                cur_dist = dist - seq.find(f_primer)
+                cur_dist = seq.find(f_primer)
                 if cur_dist < best_dist:
                     best_index = cur_hit
                     best_dist = cur_dist
 
-            elif side == 'Right' and cur_side == 'RIGHT':
+            elif side == 'Right' and cur_seq_side == 'RIGHT':
                 r_primer = data[1]
                 temp[cur_hit]['r_primer'] = r_primer
     warnings.write('Best hit for ' + side + ' for ' + gene + ' was ' + str(best_index) + ' (counting from 0) which was '
