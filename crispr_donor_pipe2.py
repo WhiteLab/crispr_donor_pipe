@@ -125,7 +125,7 @@ def process_hits(num_res, side, seq, fh, gene):
             else:
                 r_primer = data[1]
                 temp[cur_hit]['r_primer'] = r_primer
-    fh.close()
+    # fh.close()
     warnings.write('Best hit for ' + side + ' for ' + gene + ' was ' + str(best_index) + ' (counting from 0) which was '
                    + str(best_dist) + ' away\n')
     return temp[best_index]['f_primer'], temp[best_index]['r_primer'], temp[best_index]['l_tm'], temp[best_index]['r_tm']
@@ -150,6 +150,7 @@ def parse_results(output, forward, reverse, side, gene, seq):
                 num_res = int(cur[1])
                 f = 1
                 (f_primer, r_primer, l_tm, r_tm) = process_hits(num_res, side, seq, fh, gene)
+                break
         if cur[0] in attr_dict:
             attr_dict[cur[0]] = cur[1]
     fh.close()
