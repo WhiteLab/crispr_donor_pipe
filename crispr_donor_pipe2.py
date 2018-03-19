@@ -102,7 +102,7 @@ def process_hits(num_res, side, seq, fh, gene):
                     # after getting melting point for last hit, no more info needed from file
                     temp[cur_hit]['r_tm'] = data[1]
                     if int(cur_hit) == num_res - 1:
-                        fh.close()
+                        break
             elif side == 'Left' and cur_seq_side == 'RIGHT':
                 r_primer = data[1]
                 cur_dist = dist - seq.rfind(rev_comp(r_primer)) + len(r_primer)
@@ -125,6 +125,7 @@ def process_hits(num_res, side, seq, fh, gene):
             else:
                 r_primer = data[1]
                 temp[cur_hit]['r_primer'] = r_primer
+    fh.close()
     warnings.write('Best hit for ' + side + ' for ' + gene + ' was ' + str(best_index) + ' (counting from 0) which was '
                    + str(best_dist) + ' away\n')
     return temp[best_index]['f_primer'], temp[best_index]['r_primer'], temp[best_index]['l_tm'], temp[best_index]['r_tm']
