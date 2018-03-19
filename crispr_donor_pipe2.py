@@ -86,11 +86,12 @@ def process_hits(num_res, side, seq, fh, gene):
     dist = len(seq)
     best_index = dist
     best_dist = dist
-    pdb.set_trace()
+
     for result in fh:
         data = result.rstrip('\n').split('=')
         m = re.match('PRIMER_([LEFT|RIGHT])_(\d)_([SEQUENCE|TM])', data[0])
         if m:
+            pdb.set_trace()
             (cur_seq_side, cur_hit, cur_info) = (m.group(1), m.group(2), m.group(3))
             if cur_hit not in temp:
                 temp[cur_hit] = {}
