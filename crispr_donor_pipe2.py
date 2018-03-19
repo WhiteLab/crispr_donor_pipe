@@ -123,7 +123,8 @@ def process_hits(num_res, side, seq, fh, gene):
             elif side == 'Right' and cur_side == 'RIGHT':
                 r_primer = data[1]
                 temp[cur_hit]['r_primer'] = r_primer
-    warnings.write('Best hit for ' + side + ' for ' + gene + ' was ' + best_index + ' (counting from 0\n)')
+    warnings.write('Best hit for ' + side + ' for ' + gene + ' was ' + best_index + ' (counting from 0) which was '
+                   + str(best_dist) + ' away\n')
     return temp[best_index]['f_primer'], temp[best_index]['r_primer'], temp[best_index]['l_tm'], temp[best_index]['r_tm']
 
 
