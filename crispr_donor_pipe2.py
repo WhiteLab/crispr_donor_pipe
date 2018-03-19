@@ -135,7 +135,7 @@ def setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, max_stop, m
         # parse results, if primer not found, adjust length and try again
         (left_str, left_flag, left_fixed) = parse_results(l_output_file, lf_gibson, lr_gibson, 'Left', gene)
         if left_flag == 0:
-            cur_gc = calc_gc(left_fixed)
+            # cur_gc = calc_gc(left_fixed)
             warn = 'No primer for ' + nm + ' left seq found at ' + max_start + ' left and ' + max_stop \
                    + ' from stop codon\n'
 
@@ -144,7 +144,7 @@ def setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, max_stop, m
                 warnings.write('Failed finding primer for ' + nm + ' left seq.')
         (right_str, right_flag, right_fixed) = parse_results(r_output_file, rf_gibson, rr_gibson, 'Right', gene)
         if right_flag == 0:
-            cur_gc = calc_gc(right_fixed)
+            # cur_gc = calc_gc(right_fixed)
             warn = 'No primer for ' + nm + ' right seq found at ' + max_start + ' from stop codon and ' + max_stop \
                    + ' from stop right\n'
 
