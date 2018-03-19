@@ -19,6 +19,7 @@ import subprocess
 import json
 import os
 import re
+import pdb
 
 args = docopt(__doc__)
 
@@ -85,7 +86,7 @@ def process_hits(num_res, side, seq, fh, gene):
     dist = len(seq)
     best_index = dist
     best_dist = dist
-
+    pdb.set_trace()
     for result in fh:
         data = result.rstrip('\n').split('=')
         m = re.match('PRIMER_([LEFT|RIGHT])_(\d)_([SEQUENCE|TM])', data[0])
