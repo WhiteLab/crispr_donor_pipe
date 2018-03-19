@@ -140,7 +140,7 @@ def parse_results(output, forward, reverse, side, gene, seq):
     for result in fh:
         cur = result.rstrip('\n').split('=')
         if cur[0] == 'PRIMER_PAIR_NUM_RETURNED':
-            if cur[1] == 0:
+            if cur[1] == '0':
                 fh.close()
                 break
             else:
