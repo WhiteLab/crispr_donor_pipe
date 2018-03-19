@@ -114,7 +114,7 @@ def process_hits(num_res, side, seq, fh, gene):
             if side == 'Right' and cur_side == 'LEFT':
                 f_primer = data[1]
                 temp[cur_hit]['f_primer'] = f_primer
-                cur_dist = dist - seq.find(rev_comp(f_primer))
+                cur_dist = dist - seq.find(f_primer)
                 if cur_dist < best_dist:
                     best_index = cur_hit
                     best_dist = cur_dist
