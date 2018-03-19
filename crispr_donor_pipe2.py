@@ -1,6 +1,6 @@
 """Creates primers using refseq ID list and master table
 
-Usage: ./crispr_donor_pipe2.py (<config> <list> <max_start> <max_stop>) [options]
+Usage: ./crispr_donor_pipe2.py (<config> <list> <max_stop> <max_start>) [options]
 
 Arguments:
     <config>    json formatted config file with refs and tool locations
