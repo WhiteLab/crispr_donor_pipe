@@ -111,7 +111,7 @@ def process_hits(num_res, side, seq, fh, gene):
             elif side == 'Left' and cur_seq_side == 'LEFT':
                 f_primer = data[1]
                 temp[cur_hit]['f_primer'] = f_primer
-            if side == 'Right' and cur_seq_side == 'LEFT':
+            elif side == 'Right' and cur_seq_side == 'LEFT':
                 f_primer = data[1]
                 temp[cur_hit]['f_primer'] = f_primer
                 cur_dist = seq.find(f_primer)
@@ -119,7 +119,8 @@ def process_hits(num_res, side, seq, fh, gene):
                     best_index = cur_hit
                     best_dist = cur_dist
 
-            elif side == 'Right' and cur_seq_side == 'RIGHT':
+            # elif side == 'Right' and cur_seq_side == 'RIGHT':
+            else:
                 r_primer = data[1]
                 temp[cur_hit]['r_primer'] = r_primer
     warnings.write('Best hit for ' + side + ' for ' + gene + ' was ' + str(best_index) + ' (counting from 0) which was '
