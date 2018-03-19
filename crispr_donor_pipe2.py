@@ -18,6 +18,7 @@ import time
 import subprocess
 import json
 import os
+import re
 
 args = docopt(__doc__)
 
@@ -59,51 +60,99 @@ def rev_comp(seq):
     return new_seq[::-1]
 
 
-def create_seq(nm, info, max_stop, max_start, side):
+def create_seq(nm, seq, max_stop, max_start, side):
         input_file = temp_dir + nm + '_' + side + '_SEQUENCE.txt'
         out_file = open(input_file, 'w')
-        seq_len = len(info['seq'][1])
+
         if side == 'LEFT':
+            seq_len = len(seq['seq'][0])
             end = str(seq_len - int(max_stop))
-            out_file.write('SEQUENCE_ID=' + nm + '\nSEQUENCE_TEMPLATE=' + info['seq'][0]
-                            + '\nSEQUENCE_PRIMER_PAIR_OK_REGION_LIST=' + '0,' + max_start + ',' + end + ','
+            out_file.write('SEQUENCE_ID=' + nm + '\nSEQUENCE_TEMPLATE=' + seq
+                           + '\nSEQUENCE_PRIMER_PAIR_OK_REGION_LIST=' + '0,' + max_start + ',' + end + ','
                            + max_stop + '\n=')
             out_file.close()
         else:
+            seq_len = len(seq['seq'][1])
             end = str(seq_len - int(max_start))
-            out_file.write('SEQUENCE_ID=' + nm + '\nSEQUENCE_TEMPLATE=' + info['seq'][0]
+            out_file.write('SEQUENCE_ID=' + nm + '\nSEQUENCE_TEMPLATE=' + seq
                            + '\nSEQUENCE_PRIMER_PAIR_OK_REGION_LIST=' + '0,' + max_stop + ',' + end + ','
                            + max_start + '\n=')
             out_file.close()
         return input_file
 
 
-def parse_results(output, forward, reverse, side, gene):
+def process_hits(num_res, side, seq, fh, gene):
+    temp = {}
+    dist = len(seq)
+    best_index = dist
+    best_dist = dist
+
+    for result in fh:
+        data = result.rstrip('\n').split('=')
+        m = re.match('PRIMER_([LEFT|RIGHT])_(\d)_([SEQUENCE|TM])', data[0])
+        if m:
+            (cur_side, cur_hit, cur_info) = (m.group(1), m.group(2), m.group(3))
+            if cur_hit not in temp:
+                temp[cur_hit] = {}
+            if cur_info == 'TM':
+                if cur_side == 'LEFT':
+                    temp[cur_hit]['l_tm'] = data[1]
+                else:
+                    # after getting melting point for last hit, no more info needed from file
+                    temp[cur_hit]['r_tm'] = data[1]
+                    if int(cur_hit) == num_res - 1:
+                        fh.close()
+            elif side == 'Left' and cur_side == 'RIGHT':
+                r_primer = data[1]
+                cur_dist = dist - seq.rfind(rev_comp(r_primer)) + len(r_primer)
+                if cur_dist < best_dist:
+                    best_index = cur_hit
+                    best_dist = cur_dist
+                temp[cur_hit]['r_primer'] = r_primer
+            elif side == 'Left' and cur_side == 'LEFT':
+                f_primer = data[1]
+                temp[cur_hit]['f_primer'] = f_primer
+            if side == 'Right' and cur_side == 'LEFT':
+                f_primer = data[1]
+                temp[cur_hit]['f_primer'] = f_primer
+                cur_dist = dist - seq.find(rev_comp(f_primer))
+                if cur_dist < best_dist:
+                    best_index = cur_hit
+                    best_dist = cur_dist
+
+            elif side == 'Right' and cur_side == 'RIGHT':
+                r_primer = data[1]
+                temp[cur_hit]['r_primer'] = r_primer
+    warnings.write('Best hit for ' + side + ' for ' + gene + ' was ' + best_index + ' (counting from 0\n)')
+    return temp[best_index]['f_primer'], temp[best_index]['r_primer'], temp[best_index]['l_tm'], temp[best_index]['r_tm']
+
+
+def parse_results(output, forward, reverse, side, gene, seq):
     f_primer = ''
     r_primer = ''
-    attr_dict = {'PRIMER_LEFT_EXPLAIN': '', 'PRIMER_LEFT_0_TM': '', 'PRIMER_RIGHT_EXPLAIN': '',
-                 'PRIMER_RIGHT_0_TM': ''}
+    l_tm = ''
+    r_tm = ''
+    attr_dict = {'PRIMER_LEFT_EXPLAIN': '',  'PRIMER_RIGHT_EXPLAIN': ''}
     f = 0
     fixed = ''
-    for result in open(output):
+    fh = open(output)
+
+    for result in fh:
         cur = result.rstrip('\n').split('=')
+        if cur[0] == 'PRIMER_PAIR_NUM_RETURNED':
+            if cur[1] == 0:
+                fh.close()
+                break
+            else:
+                num_res = int(cur[1])
+                f = 1
+                (f_primer, r_primer, l_tm, r_tm) = process_hits(num_res, side, seq, fh, gene)
         if cur[0] in attr_dict:
             attr_dict[cur[0]] = cur[1]
-        if side == 'Left' and cur[0] == 'PRIMER_RIGHT_0_SEQUENCE':
-            r_primer = cur[1]
-            fixed = r_primer
-        elif side == 'Left' and cur[0] == 'PRIMER_LEFT_0_SEQUENCE':
-            f_primer = cur[1]
-            f = 1
-        if side == 'Right' and cur[0] == 'PRIMER_LEFT_0_SEQUENCE':
-            f_primer = cur[1]
-            fixed = f_primer
-        elif side == 'Right' and cur[0] == 'PRIMER_RIGHT_0_SEQUENCE':
-            r_primer = cur[1]
-            f = 1
+
     return '\t'.join((gene + '.' + side + '.F', forward + f_primer, attr_dict['PRIMER_LEFT_EXPLAIN'],
-                      attr_dict['PRIMER_LEFT_0_TM'], gene + '.' + side + '.R', reverse + r_primer,
-                      attr_dict['PRIMER_RIGHT_EXPLAIN'], attr_dict['PRIMER_RIGHT_0_TM'])), f, fixed
+                      l_tm, gene + '.' + side + '.R', reverse + r_primer,
+                      attr_dict['PRIMER_RIGHT_EXPLAIN'], r_tm)), f, fixed
 
 
 def run_primer3(input, output, settings, primer3):
@@ -125,22 +174,25 @@ def calc_gc(seq):
 def setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, max_stop, max_start, lf_gibson, lr_gibson,
                   rf_gibson, rr_gibson, tbl, warnings):
     for nm in seq_dict:
-        l_input_file = create_seq(nm, seq_dict[nm], max_stop, max_start, 'LEFT')
-        r_input_file = create_seq(nm, seq_dict[nm], max_stop, max_start, 'RIGHT')
+        # L and R seq in array 0 and 1
+        l_input_file = create_seq(nm, seq_dict[nm]['seq'][0], max_stop, max_start, 'LEFT')
+        r_input_file = create_seq(nm, seq_dict[nm]['seq'][1], max_stop, max_start, 'RIGHT')
         l_output_file = temp_dir + nm + '_LEFT_PRIMER3_RESULTS.txt'
         r_output_file = temp_dir + nm + '_RIGHT_PRIMER3_RESULTS.txt'
         gene = seq_dict[nm]['gene']
         run_primer3(l_input_file, l_output_file, Lsettings, primer3)
         run_primer3(r_input_file, r_output_file, Rsettings, primer3)
         # parse results, if primer not found, adjust length and try again
-        (left_str, left_flag, left_fixed) = parse_results(l_output_file, lf_gibson, lr_gibson, 'Left', gene)
+        (left_str, left_flag, left_fixed) = parse_results(l_output_file, lf_gibson, lr_gibson, 'Left', gene,
+                                                          seq_dict[nm]['seq'][0])
         if left_flag == 0:
             # cur_gc = calc_gc(left_fixed)
             warn = 'No primer for ' + nm + ' left seq found at ' + max_start + ' left and ' + max_stop \
                    + ' from stop codon\n'
 
             warnings.write(warn)
-        (right_str, right_flag, right_fixed) = parse_results(r_output_file, rf_gibson, rr_gibson, 'Right', gene)
+        (right_str, right_flag, right_fixed) = parse_results(r_output_file, rf_gibson, rr_gibson, 'Right', gene,
+                                                             seq_dict[nm]['seq'][0])
         if right_flag == 0:
             warn = 'No primer for ' + nm + ' right seq found at ' + max_start + ' from stop codon and ' + max_stop \
                    + ' from stop right\n'
@@ -160,9 +212,10 @@ temp_dir = timestamp + '_TEMP/'
 os.mkdir(temp_dir)
 
 
-header = 'RefSeq ID \tDonor Left join F\tDonor Left join F oligo sequence\tLF_Notes\tLF_TM\tDonor Left join R\t' \
-         'Donor Left join R oligo sequence\tLR_Notes\tLR_TM\tDonor Right join F\tDonor Right join F oligo sequence' \
-         '\tRF_Notes\tRF_TM\tDonor Right join R\tDonor Right join R oligo sequence\tRR_Notes\tRR_TM\n'
+header = 'RefSeq ID \tDonor Left join F\tDonor Left join F oligo sequence\tLF_Notes' \
+         '\tLF_TM\tDonor Left join R\tDonor Left join R oligo sequence\tLR_Notes\tLR_TM\tDonor Right join F' \
+         '\tDonor Right join F oligo sequence\tRF_Notes\tRF_TM\tDonor Right join R\tDonor Right join R oligo sequence' \
+         '\tRR_Notes\tRR_TM\n'
 tbl.write(header)
 id_dict = {}
 # set up transcript list
