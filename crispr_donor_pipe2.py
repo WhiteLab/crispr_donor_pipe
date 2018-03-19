@@ -145,7 +145,6 @@ def parse_results(output, forward, reverse, side, gene, seq):
         cur = result.rstrip('\n').split('=')
         if cur[0] == 'PRIMER_PAIR_NUM_RETURNED':
             if cur[1] == '0':
-                fh.close()
                 break
             else:
                 num_res = int(cur[1])
@@ -153,6 +152,7 @@ def parse_results(output, forward, reverse, side, gene, seq):
                 (f_primer, r_primer, l_tm, r_tm) = process_hits(num_res, side, seq, fh, gene)
         if cur[0] in attr_dict:
             attr_dict[cur[0]] = cur[1]
+    fh.close()
 
     return '\t'.join((gene + '.' + side + '.F', forward + f_primer, attr_dict['PRIMER_LEFT_EXPLAIN'],
                       l_tm, gene + '.' + side + '.R', reverse + r_primer,
