@@ -141,7 +141,7 @@ def setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, max_stop, m
 
             warnings.write(warn)
             if left_flag == 0:
-                warnings.write('Failed finding primer for ' + nm + ' left seq.')
+                warnings.write('Failed finding primer for ' + nm + ' left seq.\n')
         (right_str, right_flag, right_fixed) = parse_results(r_output_file, rf_gibson, rr_gibson, 'Right', gene)
         if right_flag == 0:
             # cur_gc = calc_gc(right_fixed)
@@ -150,7 +150,7 @@ def setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, max_stop, m
 
             warnings.write(warn)
             if right_flag == 0:
-                warnings.write('Failed finding primer for ' + nm + ' right seq.')
+                warnings.write('Failed finding primer for ' + nm + ' right seq.\n')
         tbl.write(nm + '\t' + left_str + '\t' + right_str + '\n')
 
 
