@@ -19,7 +19,6 @@ import subprocess
 import json
 import os
 import re
-import pdb
 
 args = docopt(__doc__)
 
@@ -109,19 +108,29 @@ def process_hits(num_res, side, seq, fh, gene):
                 if cur_dist < best_dist:
                     best_index = cur_hit
                     best_dist = cur_dist
-                temp[cur_hit]['r_primer'] = r_primer
+                # need to get rest of seq leading to stop codon and tack on
+                gap_seq = rev_comp(seq[(dist-cur_dist):])
+                if cur_dist > 0:
+                    temp[cur_hit]['r_primer'] = gap_seq + r_primer.lower()
+                else:
+                    temp[cur_hit]['r_primer'] = r_primer
             elif side == 'Left' and cur_seq_side == 'LEFT':
                 f_primer = data[1]
                 temp[cur_hit]['f_primer'] = f_primer
+
             elif side == 'Right' and cur_seq_side == 'LEFT':
                 f_primer = data[1]
-                temp[cur_hit]['f_primer'] = f_primer
+
                 cur_dist = seq.find(f_primer)
                 if cur_dist < best_dist:
                     best_index = cur_hit
                     best_dist = cur_dist
-
-            # elif side == 'Right' and cur_seq_side == 'RIGHT':
+                # need to get rest of seq leading to stop codon and tack on
+                gap_seq = seq[0:cur_dist]
+                if cur_dist > 0:
+                    temp[cur_hit]['f_primer'] = gap_seq + f_primer.lower()
+                else:
+                    temp[cur_hit]['f_primer'] = f_primer
             else:
                 r_primer = data[1]
                 temp[cur_hit]['r_primer'] = r_primer
@@ -136,9 +145,10 @@ def parse_results(output, forward, reverse, side, gene, seq):
     r_primer = ''
     l_tm = ''
     r_tm = ''
+    l_struct_tm = ''
+    r_struct_tm = ''
     attr_dict = {'PRIMER_LEFT_EXPLAIN': '',  'PRIMER_RIGHT_EXPLAIN': ''}
     f = 0
-    fixed = ''
     fh = open(output)
 
     for result in fh:
@@ -156,8 +166,8 @@ def parse_results(output, forward, reverse, side, gene, seq):
     fh.close()
 
     return '\t'.join((gene + '.' + side + '.F', forward + f_primer, attr_dict['PRIMER_LEFT_EXPLAIN'],
-                      l_tm, gene + '.' + side + '.R', reverse + r_primer,
-                      attr_dict['PRIMER_RIGHT_EXPLAIN'], r_tm)), f, fixed
+                      l_tm, l_struct_tm, gene + '.' + side + '.R', reverse + r_primer,
+                      attr_dict['PRIMER_RIGHT_EXPLAIN'], r_tm, r_struct_tm)), f
 
 
 def run_primer3(input, output, settings, primer3):
@@ -188,7 +198,7 @@ def setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, max_stop, m
         run_primer3(l_input_file, l_output_file, Lsettings, primer3)
         run_primer3(r_input_file, r_output_file, Rsettings, primer3)
         # parse results, if primer not found, adjust length and try again
-        (left_str, left_flag, left_fixed) = parse_results(l_output_file, lf_gibson, lr_gibson, 'Left', gene,
+        (left_str, left_flag) = parse_results(l_output_file, lf_gibson, lr_gibson, 'Left', gene,
                                                           seq_dict[nm]['seq'][0])
         if left_flag == 0:
             # cur_gc = calc_gc(left_fixed)
@@ -196,7 +206,7 @@ def setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, max_stop, m
                    + ' from stop codon\n'
 
             warnings.write(warn)
-        (right_str, right_flag, right_fixed) = parse_results(r_output_file, rf_gibson, rr_gibson, 'Right', gene,
+        (right_str, right_flag) = parse_results(r_output_file, rf_gibson, rr_gibson, 'Right', gene,
                                                              seq_dict[nm]['seq'][1])
         if right_flag == 0:
             warn = 'No primer for ' + nm + ' right seq found at ' + max_start + ' from stop codon and ' + max_stop \
@@ -218,9 +228,9 @@ os.mkdir(temp_dir)
 
 
 header = 'RefSeq ID \tDonor Left join F\tDonor Left join F oligo sequence\tLF_Notes' \
-         '\tLF_TM\tDonor Left join R\tDonor Left join R oligo sequence\tLR_Notes\tLR_TM\tDonor Right join F' \
-         '\tDonor Right join F oligo sequence\tRF_Notes\tRF_TM\tDonor Right join R\tDonor Right join R oligo sequence' \
-         '\tRR_Notes\tRR_TM\n'
+         '\tLF_TM\tLF_2nd_TM\tDonor Left join R\tDonor Left join R oligo sequence\tLR_Notes\tLR_TM\tLR_2nd_TM' \
+         '\tDonor Right join F\tDonor Right join F oligo sequence\tRF_Notes\tRF_TM\tRF_2nd_TM\tDonor Right join R' \
+         '\tDonor Right join R oligo sequence\tRR_Notes\tRR_TM\tRR_2nd_TM\n'
 tbl.write(header)
 id_dict = {}
 # set up transcript list
