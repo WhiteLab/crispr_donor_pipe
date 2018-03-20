@@ -81,6 +81,18 @@ def create_seq(nm, seq, max_stop, max_start, side):
         return input_file
 
 
+def parse_mfold_out(out_fn):
+    fh = open(out_fn)
+    tm_val = ''
+    for line in fh:
+        tm = re.match('Tm\s+=\s+(\d+\.\d)', line)
+        if tm:
+            tm_val = tm.group(1)
+            break
+    fh.close()
+    return tm_val
+
+
 def process_hits(num_res, side, seq, fh, gene, config, temp_dir, f_gibson, r_gibson):
     temp = {}
     dist = len(seq)
@@ -136,6 +148,7 @@ def process_hits(num_res, side, seq, fh, gene, config, temp_dir, f_gibson, r_gib
                 r_primer = data[1]
                 temp[cur_hit]['r_primer'] = r_primer
     # iterate though hits to calculate secondary structure
+    (l_struct_tm, r_struct_tm) = ('', '')
     for hit in temp:
         fname = gene + '.' + side + '.F_' + hit
         rname = gene + '.' + side + '.R_' + hit
@@ -144,9 +157,12 @@ def process_hits(num_res, side, seq, fh, gene, config, temp_dir, f_gibson, r_gib
         if float(test_tm) > float(temp[hit]['r_tm']):
             test_tm = temp[hit]['r_tm']
         test_tm = str(int(float(test_tm)))
+        # check if best hit and get 2nd struct tm
         run_mfold(config, temp_dir, fname, f_gibson + temp[hit]['f_primer'], test_tm)
         run_mfold(config, temp_dir, rname, r_gibson + temp[hit]['r_primer'], test_tm)
-    (l_struct_tm, r_struct_tm) = ('', '')
+        if hit == best_index:
+            l_struct_tm = parse_mfold_out(temp_dir + fname + '.fa.out')
+            r_struct_tm = parse_mfold_out(temp_dir + rname + '.fa.out')
     warnings.write('Best hit for ' + side + ' for ' + gene + ' was ' + str(best_index) + ' (counting from 0) which was '
                    + str(best_dist) + ' away\n')
     return temp[best_index]['f_primer'], temp[best_index]['r_primer'], temp[best_index]['l_tm'], \

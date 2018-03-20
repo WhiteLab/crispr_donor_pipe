@@ -34,15 +34,21 @@ def create_fa(out_dir, seg_name, seq):
     fa = open(fn, 'w')
     fa.write('>' + seg_name + '\n' + seq + '\n')
     fa.close()
+    sys.stderr.write('Changing to WD ' + out_dir + '\n')
+    os.chdir(out_dir)
     return fn
 
 
 def run_mfold(config, out_dir, seg_name, seq, tm):
+    cwd = os.getcwd()
     mfold = parse_config(config)
     fn = create_fa(out_dir, seg_name, seq)
-    run_mfold_cmd = mfold + ' SEQ=' + fn + ' NA=DNA T=' + tm
+    run_mfold_cmd = mfold + ' SEQ=' + cwd + '/' + fn + ' NA=DNA T=' + tm + ' 2> ' + seg_name + '.err' + ' > ' \
+                    + seg_name + '.out'
     sys.stderr.write('mfold command ' + run_mfold_cmd + '\n')
     check = subprocess.call(run_mfold_cmd, shell=True)
+    os.chdir(cwd)
+    sys.stderr.write('Changed back to pipe run dir ' + cwd + '\n')
     if check != 0:
         sys.stderr.write('mfold exited with errors for ' + seg_name + '\n')
         return 1
