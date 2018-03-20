@@ -143,7 +143,7 @@ def process_hits(num_res, side, seq, fh, gene, config, temp_dir):
         # use lowest tm of set
         if float(test_tm) > float(temp[hit]['r_tm']):
             test_tm = temp[hit]['r_tm']
-        test_tm = str(int(test_tm))
+        test_tm = str(int(float(test_tm)))
         run_mfold(config, temp_dir, fname, temp[hit]['f_primer'], test_tm)
         run_mfold(config, temp_dir, rname, temp[hit]['r_primer'], test_tm)
     (l_struct_tm, r_struct_tm) = ('', '')
