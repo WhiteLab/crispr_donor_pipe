@@ -69,13 +69,13 @@ def create_seq(nm, seq, max_stop, max_start, side):
 
             end = str(seq_len - int(max_stop))
             out_file.write('SEQUENCE_ID=' + nm + '\nSEQUENCE_TEMPLATE=' + seq
-                           + '\nSEQUENCE_PRIMER_PAIR_OK_REGION_LIST=' + '0,' + max_start + ',' + end + ','
+                           + '\nSEQUENCE_PRIMER_PAIR_OK_REGION_LIST=' + '1,' + max_start + ',' + end + ','
                            + max_stop + '\n=')
             out_file.close()
         else:
             end = str(seq_len - int(max_start))
             out_file.write('SEQUENCE_ID=' + nm + '\nSEQUENCE_TEMPLATE=' + seq
-                           + '\nSEQUENCE_PRIMER_PAIR_OK_REGION_LIST=' + '0,' + max_stop + ',' + end + ','
+                           + '\nSEQUENCE_PRIMER_PAIR_OK_REGION_LIST=' + '1,' + max_stop + ',' + end + ','
                            + max_start + '\n=')
             out_file.close()
         return input_file
