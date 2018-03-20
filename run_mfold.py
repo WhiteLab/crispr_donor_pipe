@@ -47,7 +47,7 @@ def run_mfold(config, out_dir, seg_name, seq, tm):
                     + seg_name + '.out'
     sys.stderr.write('mfold command ' + run_mfold_cmd + '\n')
     check = subprocess.call(run_mfold_cmd, shell=True)
-    cleanup = 'rm -v \'!(*.out|*.ps)\''
+    cleanup = 'rm -v !\(*.out|*.ps\)'
     sys.stderr.write('Cleaning out unneeded temp files ' + cleanup + '\n')
     subprocess.call(cleanup, shell=True)
     os.chdir(cwd)
