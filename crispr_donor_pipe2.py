@@ -161,8 +161,8 @@ def process_hits(num_res, side, seq, fh, gene, config, temp_dir, f_gibson, r_gib
         run_mfold(config, temp_dir, fname, f_gibson + temp[hit]['f_primer'], test_tm)
         run_mfold(config, temp_dir, rname, r_gibson + temp[hit]['r_primer'], test_tm)
         if hit == best_index:
-            l_struct_tm = parse_mfold_out(temp_dir + fname + '.fa.out')
-            r_struct_tm = parse_mfold_out(temp_dir + rname + '.fa.out')
+            l_struct_tm = parse_mfold_out(temp_dir + 'FOLDS/' + fname + '.fa.out')
+            r_struct_tm = parse_mfold_out(temp_dir + 'FOLDS/' + rname + '.fa.out')
     warnings.write('Best hit for ' + side + ' for ' + gene + ' was ' + str(best_index) + ' (counting from 0) which was '
                    + str(best_dist) + ' away\n')
     return temp[best_index]['f_primer'], temp[best_index]['r_primer'], temp[best_index]['l_tm'], \
