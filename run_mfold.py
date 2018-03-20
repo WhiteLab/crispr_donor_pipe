@@ -39,6 +39,12 @@ def create_fa(out_dir, seg_name, seq):
     return fn
 
 
+def cleanup():
+    for fn in os.listdir('./'):
+        if not fn.endswith('.out') and not fn.endswith('.ps'):
+            os.remove(fn)
+
+
 def run_mfold(config, out_dir, seg_name, seq, tm):
     cwd = os.getcwd()
     mfold = parse_config(config)
@@ -47,9 +53,8 @@ def run_mfold(config, out_dir, seg_name, seq, tm):
                     + seg_name + '.out'
     sys.stderr.write('mfold command ' + run_mfold_cmd + '\n')
     check = subprocess.call(run_mfold_cmd, shell=True)
-    cleanup = 'rm -v !\(*.out|*.ps\)'
-    sys.stderr.write('Cleaning out unneeded temp files ' + cleanup + '\n')
-    subprocess.call(cleanup, shell=True)
+    sys.stderr.write('Cleaning out unneeded temp files\n')
+    cleanup()
     os.chdir(cwd)
     sys.stderr.write('Changed back to pipe run dir ' + cwd + '\n')
     if check != 0:
