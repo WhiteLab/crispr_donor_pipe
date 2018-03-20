@@ -81,7 +81,7 @@ def create_seq(nm, seq, max_stop, max_start, side):
         return input_file
 
 
-def process_hits(num_res, side, seq, fh, gene, config, temp_dir):
+def process_hits(num_res, side, seq, fh, gene, config, temp_dir, f_gibson, r_gibson):
     temp = {}
     dist = len(seq)
     best_index = dist
@@ -144,8 +144,8 @@ def process_hits(num_res, side, seq, fh, gene, config, temp_dir):
         if float(test_tm) > float(temp[hit]['r_tm']):
             test_tm = temp[hit]['r_tm']
         test_tm = str(int(float(test_tm)))
-        run_mfold(config, temp_dir, fname, temp[hit]['f_primer'], test_tm)
-        run_mfold(config, temp_dir, rname, temp[hit]['r_primer'], test_tm)
+        run_mfold(config, temp_dir, fname, f_gibson + temp[hit]['f_primer'], test_tm)
+        run_mfold(config, temp_dir, rname, r_gibson + temp[hit]['r_primer'], test_tm)
     (l_struct_tm, r_struct_tm) = ('', '')
     warnings.write('Best hit for ' + side + ' for ' + gene + ' was ' + str(best_index) + ' (counting from 0) which was '
                    + str(best_dist) + ' away\n')
@@ -173,7 +173,7 @@ def parse_results(output, forward, reverse, side, gene, seq, config, temp_dir):
                 num_res = int(cur[1])
                 f = 1
                 (f_primer, r_primer, l_tm, r_tm, l_struct_tm, r_struct_tm) = process_hits(num_res, side, seq, fh,
-                                                                                          gene, config, temp_dir)
+                                                                            gene, config, temp_dir, forward, reverse)
                 break
         if cur[0] in attr_dict:
             attr_dict[cur[0]] = cur[1]

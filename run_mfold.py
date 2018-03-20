@@ -26,11 +26,11 @@ def parse_config(config_file):
 
 
 def create_fa(out_dir, seg_name, seq):
-    if not os.path.isdir(out_dir):
+    if not os.path.isdir(out_dir + 'FOLDS'):
         mk_out = 'mkdir -p ' + out_dir
         subprocess.call(mk_out, shell=True)
-    fn = out_dir + seg_name + '.fa'
-    fa = open(seg_name + '.fa', 'w')
+    fn = out_dir + 'FOLDS/' + seg_name + '.fa'
+    fa = open(fn, 'w')
     fa.write('>' + seg_name + '\n' + seq + '\n')
     fa.close()
     return fn
