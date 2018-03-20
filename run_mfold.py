@@ -39,8 +39,8 @@ def create_fa(out_dir, seg_name, seq):
 def run_mfold(config, out_dir, seg_name, seq, tm):
     mfold = parse_config(config)
     fn = create_fa(out_dir, seg_name, seq)
-    run_mfold_cmd = mfold + ' SEQ=' + fn + ' NA=DNA TM=' + tm
-    sys.stderr.write('mfold command ' + run_mfold_cmd)
+    run_mfold_cmd = mfold + ' SEQ=' + fn + ' NA=DNA T=' + tm
+    sys.stderr.write('mfold command ' + run_mfold_cmd + '\n')
     check = subprocess.call(run_mfold_cmd, shell=True)
     if check != 0:
         sys.stderr.write('mfold exited with errors for ' + seg_name + '\n')
