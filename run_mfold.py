@@ -47,8 +47,8 @@ def run_mfold(config, out_dir, seg_name, seq, tm):
                     + seg_name + '.out'
     sys.stderr.write('mfold command ' + run_mfold_cmd + '\n')
     check = subprocess.call(run_mfold_cmd, shell=True)
-    cleanup = 'rm -v !(*.out|*.ps)'
-    sys.stderr.write('Ceaning out unneeded temp files ' + cleanup + '\n')
+    cleanup = 'sh -c \'rm -v !(*.out|*.ps)\''
+    sys.stderr.write('Cleaning out unneeded temp files ' + cleanup + '\n')
     subprocess.call(cleanup, shell=True)
     os.chdir(cwd)
     sys.stderr.write('Changed back to pipe run dir ' + cwd + '\n')
