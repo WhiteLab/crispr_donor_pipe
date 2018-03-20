@@ -85,7 +85,7 @@ def parse_mfold_out(out_fn):
     fh = open(out_fn)
     tm_val = ''
     for line in fh:
-        tm = re.match('Tm\s+=\s+(\d+\.\d)', line)
+        tm = re.match('.*Tm\s+=\s+(\d+\.\d)', line)
         if tm:
             tm_val = tm.group(1)
             break
