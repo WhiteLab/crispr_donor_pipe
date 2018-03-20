@@ -1,5 +1,6 @@
 {
   "primer3": "/data/tools/primer3-2.4.0/src/primer3_core",
+  "mfold": "/data/tools/mfold-3.6/bin/mfold",
   "master": "/data/tools/crispr_donor_pipe/REFS/hg19_stop_region_master.txt.gz",
   "Lsettings": "/data/tools/crispr_donor_pipe/REFS/L_primer3_settings.txt",
   "Rsettings": "/data/tools/crispr_donor_pipe/REFS/R_primer3_settings.txt",

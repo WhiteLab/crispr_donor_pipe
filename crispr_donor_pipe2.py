@@ -19,6 +19,7 @@ import subprocess
 import json
 import os
 import re
+from run_mfold import run_mfold
 
 args = docopt(__doc__)
 
@@ -80,7 +81,7 @@ def create_seq(nm, seq, max_stop, max_start, side):
         return input_file
 
 
-def process_hits(num_res, side, seq, fh, gene):
+def process_hits(num_res, side, seq, fh, gene, config, temp_dir):
     temp = {}
     dist = len(seq)
     best_index = dist
@@ -134,13 +135,25 @@ def process_hits(num_res, side, seq, fh, gene):
             else:
                 r_primer = data[1]
                 temp[cur_hit]['r_primer'] = r_primer
-    # fh.close()
+    # iterate though hits to calculate secondary structure
+    for hit in temp:
+        fname = gene + '.' + side + '.F_' + hit
+        rname = gene + '.' + side + '.R_' + hit
+        test_tm = temp[hit]['l_tm']
+        # use lowest tm of set
+        if float(test_tm) > float(temp[hit]['r_tm']):
+            test_tm = temp[hit]['r_tm']
+        test_tm = str(int(test_tm))
+        run_mfold(config, temp_dir, fname, temp[hit]['f_primer'], test_tm)
+        run_mfold(config, temp_dir, rname, temp[hit]['r_primer'], test_tm)
+    (l_struct_tm, r_struct_tm) = ('', '')
     warnings.write('Best hit for ' + side + ' for ' + gene + ' was ' + str(best_index) + ' (counting from 0) which was '
                    + str(best_dist) + ' away\n')
-    return temp[best_index]['f_primer'], temp[best_index]['r_primer'], temp[best_index]['l_tm'], temp[best_index]['r_tm']
+    return temp[best_index]['f_primer'], temp[best_index]['r_primer'], temp[best_index]['l_tm'], \
+           temp[best_index]['r_tm'], l_struct_tm, r_struct_tm
 
 
-def parse_results(output, forward, reverse, side, gene, seq):
+def parse_results(output, forward, reverse, side, gene, seq, config, temp_dir):
     f_primer = ''
     r_primer = ''
     l_tm = ''
@@ -159,7 +172,8 @@ def parse_results(output, forward, reverse, side, gene, seq):
             else:
                 num_res = int(cur[1])
                 f = 1
-                (f_primer, r_primer, l_tm, r_tm) = process_hits(num_res, side, seq, fh, gene)
+                (f_primer, r_primer, l_tm, r_tm, l_struct_tm, r_struct_tm) = process_hits(num_res, side, seq, fh,
+                                                                                          gene, config, temp_dir)
                 break
         if cur[0] in attr_dict:
             attr_dict[cur[0]] = cur[1]
@@ -187,7 +201,7 @@ def calc_gc(seq):
 
 
 def setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, max_stop, max_start, lf_gibson, lr_gibson,
-                  rf_gibson, rr_gibson, tbl, warnings):
+                  rf_gibson, rr_gibson, tbl, warnings, config):
     for nm in seq_dict:
         # L and R seq in array 0 and 1
         l_input_file = create_seq(nm, seq_dict[nm]['seq'][0], max_stop, max_start, 'LEFT')
@@ -199,7 +213,7 @@ def setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, max_stop, m
         run_primer3(r_input_file, r_output_file, Rsettings, primer3)
         # parse results, if primer not found, adjust length and try again
         (left_str, left_flag) = parse_results(l_output_file, lf_gibson, lr_gibson, 'Left', gene,
-                                                          seq_dict[nm]['seq'][0])
+                                                          seq_dict[nm]['seq'][0], config, temp_dir)
         if left_flag == 0:
             # cur_gc = calc_gc(left_fixed)
             warn = 'No primer for ' + nm + ' left seq found at ' + max_start + ' left and ' + max_stop \
@@ -207,7 +221,7 @@ def setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, max_stop, m
 
             warnings.write(warn)
         (right_str, right_flag) = parse_results(r_output_file, rf_gibson, rr_gibson, 'Right', gene,
-                                                             seq_dict[nm]['seq'][1])
+                                                             seq_dict[nm]['seq'][1], config, temp_dir)
         if right_flag == 0:
             warn = 'No primer for ' + nm + ' right seq found at ' + max_start + ' from stop codon and ' + max_stop \
                    + ' from stop right\n'
@@ -240,6 +254,6 @@ for line in open(args['<list>']):
 # get relevant seqs from table
 seq_dict = populate_seq_dict(id_dict, master, warnings)
 setup_primer3(seq_dict, primer3, Lsettings, Rsettings, temp_dir, max_stop, max_start, lf_gibson, lr_gibson, rf_gibson,
-              rr_gibson, tbl, warnings)
+              rr_gibson, tbl, warnings, args['<config>'])
 tbl.close()
 warnings.close()
