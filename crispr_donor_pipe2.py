@@ -6,7 +6,7 @@ Arguments:
     <config>    json formatted config file with refs and tool locations
     <list>      list of refSeq IDs, one per line
     <max_stop>    max num nt from stop codon to search from (i.e., 40)
-    <max_start>    max num nt from start to search from (i.e. 380)
+    <max_start>    max num nt from start to search from (i.e. 360)
 
 Options:
     -h --help
